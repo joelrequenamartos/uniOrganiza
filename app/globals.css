@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/*
+ * uniOrganiza — dark, minimal, sleek.
+ * Single committed theme (dark only). Tokens are the only source of colour.
+ */
+
+:root {
+  /* Surfaces (layered, low contrast) */
+  --bg: #0a0a0b;
+  --surface: #141416;
+  --surface-2: #1c1c1f;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Text */
+  --text: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-faint: #6b6b73;
+
+  /* Accent (used sparingly) */
+  --accent: #7aa2f7;
+  --accent-contrast: #0a0a0b;
+
+  /* Event-type hues — deliberately desaturated */
+  --type-assignment: #e0af68;
+  --type-exam: #f7768e;
+  --type-activity: #9ece6a;
+  --type-class: #7dcfff;
+
+  /* Priority accents for the "próximamente" block */
+  --prio-overdue: #f7768e;
+  --prio-max: #f7768e;
+  --prio-high: #e0af68;
+  --prio-medium: #7aa2f7;
+  --prio-low: #a1a1aa;
+
+  --radius: 14px;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+
+  --color-type-assignment: var(--type-assignment);
+  --color-type-exam: var(--type-exam);
+  --color-type-activity: var(--type-activity);
+  --color-type-class: var(--type-class);
+
+  --radius-card: var(--radius);
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  color-scheme: dark;
+  background: var(--bg);
+  /* Prevent iOS text auto-inflation on rotation */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* App-like: no rubber-band overscroll bleed, no horizontal scroll */
+  overscroll-behavior-y: none;
+  overflow-x: hidden;
+}
+
+/* Respect reduced motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
