@@ -1,14 +1,28 @@
-import { EmptyState, ScreenHeader } from "@/components/ui/screen-header";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { WeekSection } from "@/components/dashboard/week-section";
+import { UpcomingSection } from "@/components/dashboard/upcoming-section";
+import { getEvents } from "@/lib/data";
+import { groupThisWeek, groupUpcomingByType } from "@/lib/domain/grouping";
+import { DEFAULT_TIMEZONE, formatMonth, nowInTz } from "@/lib/dates";
 
-/** Dashboard / Inicio. Real content arrives in Phase 4. */
-export default function DashboardPage() {
+// Fixtures compute dates relative to "now"; keep this off the static cache.
+// Becomes naturally dynamic once it reads the auth session (final phase).
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const tz = DEFAULT_TIMEZONE;
+  const now = nowInTz(tz);
+
+  const events = await getEvents({ includeCompleted: false });
+
+  const week = groupThisWeek(events, tz, now);
+  const upcoming = groupUpcomingByType(events, tz, now);
+
   return (
     <>
-      <ScreenHeader title="Inicio" />
-      <EmptyState
-        title="Aún no hay nada que mostrar"
-        hint="El dashboard con tu semana y lo que se acerca se implementa en la Fase 4."
-      />
+      <ScreenHeader title={formatMonth(now, tz)} />
+      <WeekSection groups={week} tz={tz} />
+      <UpcomingSection groups={upcoming} tz={tz} />
     </>
   );
 }
