@@ -1,6 +1,10 @@
 import type { PrioritizedEvent } from "@/types/domain";
 import type { TypeGroup } from "@/lib/domain/grouping";
-import { EVENT_TYPE_META, PRIORITY_COLOR } from "@/lib/domain/type-meta";
+import {
+  EVENT_TYPE_META,
+  PRIORITY_COLOR,
+  rowStyleFor,
+} from "@/lib/domain/type-meta";
 import { priorityLabel } from "@/lib/domain/priority";
 import { formatDayMonth } from "@/lib/dates";
 import { SubjectDot } from "./subject-dot";
@@ -47,20 +51,25 @@ function UpcomingRow({ item, tz }: { item: PrioritizedEvent; tz: string }) {
   const { event, priority } = item;
   const instant = event.dueAt ?? event.startAt!;
   const canComplete = event.type === "assignment" || event.type === "activity";
+  const isExam = event.type === "exam";
+  const barColor = isExam ? "var(--type-exam)" : PRIORITY_COLOR[priority];
 
   return (
-    <li className="flex items-center gap-3 rounded-card border border-border bg-surface py-3 pl-3 pr-4">
+    <li
+      className="flex items-center gap-3 rounded-card border border-border bg-surface py-3 pl-3 pr-4"
+      style={rowStyleFor(event.type)}
+    >
       <span
         className="h-9 w-1 shrink-0 rounded-full"
-        style={{ backgroundColor: PRIORITY_COLOR[priority] }}
+        style={{ backgroundColor: barColor }}
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span
             className="text-[11px] font-semibold uppercase tracking-wide"
-            style={{ color: PRIORITY_COLOR[priority] }}
+            style={{ color: barColor }}
           >
-            {priorityLabel(item)}
+            {isExam ? `Examen · ${priorityLabel(item)}` : priorityLabel(item)}
           </span>
           <span className="text-[11px] text-text-faint">
             {formatDayMonth(instant, tz)}
@@ -73,6 +82,11 @@ function UpcomingRow({ item, tz }: { item: PrioritizedEvent; tz: string }) {
           <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-text-muted">
             <SubjectDot color={event.subject.color} size={6} />
             {event.subject.name}
+          </p>
+        )}
+        {event.description && (
+          <p className="mt-0.5 truncate text-xs text-text-faint">
+            {event.description}
           </p>
         )}
       </div>

@@ -1,5 +1,5 @@
 import type { DayGroup } from "@/lib/domain/grouping";
-import { EVENT_TYPE_META } from "@/lib/domain/type-meta";
+import { EVENT_TYPE_META, rowStyleFor } from "@/lib/domain/type-meta";
 import { eventInstant } from "@/types/domain";
 import { formatDayShort, formatRange, formatTime } from "@/lib/dates";
 import { SubjectDot } from "./subject-dot";
@@ -27,6 +27,7 @@ export function WeekSection({
             g.events.map((e) => {
               const instant = eventInstant(e)!;
               const meta = EVENT_TYPE_META[e.type];
+              const isExam = e.type === "exam";
               const timeLabel =
                 e.startAt && e.endAt
                   ? formatRange(e.startAt, e.endAt, tz)
@@ -37,16 +38,33 @@ export function WeekSection({
                 <li
                   key={e.id}
                   className="flex items-center gap-3 rounded-card border border-border bg-surface px-4 py-3"
+                  style={rowStyleFor(e.type)}
                 >
                   <div className="w-11 shrink-0 text-xs font-medium text-text-muted">
                     {formatDayShort(instant, tz)}
                   </div>
                   <div
                     className="h-8 w-0.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: e.subject?.color ?? "var(--border-strong)" }}
+                    style={{
+                      backgroundColor: isExam
+                        ? "var(--type-exam)"
+                        : e.subject?.color ?? "var(--border-strong)",
+                    }}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-text">
+                    <p className="flex items-center gap-2 truncate text-sm font-medium text-text">
+                      {isExam && (
+                        <span
+                          className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                          style={{
+                            color: "var(--type-exam)",
+                            background:
+                              "color-mix(in srgb, var(--type-exam) 16%, transparent)",
+                          }}
+                        >
+                          Examen
+                        </span>
+                      )}
                       {e.type === "class"
                         ? e.subject?.name ?? "Clase"
                         : e.title}
@@ -65,6 +83,11 @@ export function WeekSection({
                         <span className="truncate">{e.subject?.name}</span>
                       )}
                     </p>
+                    {e.description && (
+                      <p className="mt-0.5 truncate text-xs text-text-faint">
+                        {e.description}
+                      </p>
+                    )}
                   </div>
                   <div className="shrink-0 text-xs tabular-nums text-text-muted">
                     {timeLabel}

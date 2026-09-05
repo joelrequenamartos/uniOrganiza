@@ -56,6 +56,11 @@ export function DayDetail({
                       </>
                     )}
                   </p>
+                  {e.description && (
+                    <p className="mt-0.5 truncate text-xs text-text-faint">
+                      {e.description}
+                    </p>
+                  )}
                 </div>
                 <span className="shrink-0 text-xs tabular-nums text-text-muted">
                   {time}
