@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { AcademicEvent } from "@/types/domain";
 import { eventInstant } from "@/types/domain";
 import { EVENT_TYPE_META } from "@/lib/domain/type-meta";
@@ -8,10 +9,12 @@ export function EventLine({
   event,
   tz,
   showType = false,
+  action,
 }: {
   event: AcademicEvent;
   tz: string;
   showType?: boolean;
+  action?: ReactNode;
 }) {
   const instant = eventInstant(event);
   const meta = EVENT_TYPE_META[event.type];
@@ -45,6 +48,7 @@ export function EventLine({
           {time}
         </span>
       )}
+      {action}
     </li>
   );
 }

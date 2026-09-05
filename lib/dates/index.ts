@@ -51,6 +51,23 @@ export function localWeekRange(date: TZDate): { start: TZDate; end: TZDate } {
   };
 }
 
+/**
+ * Turn a local wall-clock date (yyyy-MM-dd) + optional time (HH:mm) in `tz`
+ * into a UTC ISO instant. When no time is given, anchors at midday local so
+ * the calendar-day never shifts across a DST/UTC boundary.
+ */
+export function localDateTimeToIso(
+  date: string,
+  time: string | null,
+  tz: string,
+): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const [hh, mm] = time ? time.split(":").map(Number) : [12, 0];
+  const local = new TZDate(y, m - 1, d, hh, mm, tz);
+  // Normalise to a plain UTC ("Z") ISO string.
+  return new Date(local.getTime()).toISOString();
+}
+
 // ---- Formatting (Spanish locale) -------------------------------------------
 
 export function formatTime(iso: string, tz: string): string {

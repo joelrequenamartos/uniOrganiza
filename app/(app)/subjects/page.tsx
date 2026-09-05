@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { startOfDay } from "date-fns";
 import { EmptyState, ScreenHeader } from "@/components/ui/screen-header";
-import { SubjectDot } from "@/components/dashboard/subject-dot";
 import { getEvents, getSubjects } from "@/lib/data";
 import { EVENT_TYPE_META } from "@/lib/domain/type-meta";
 import { eventInstant } from "@/types/domain";

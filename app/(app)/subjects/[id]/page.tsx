@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { EmptyState } from "@/components/ui/screen-header";
 import { EventLine } from "@/components/events/event-line";
+import { CompleteButton } from "@/components/events/complete-button";
 import { getEvents, getSubject } from "@/lib/data";
 import { buildSubjectAgenda } from "@/lib/domain/subject-agenda";
 import { EVENT_TYPE_META } from "@/lib/domain/type-meta";
@@ -59,7 +60,16 @@ export default async function SubjectDetailPage({
               </h2>
               <ul className="flex flex-col gap-2">
                 {section.events.map((e) => (
-                  <EventLine key={e.id} event={e} tz={tz} />
+                  <EventLine
+                    key={e.id}
+                    event={e}
+                    tz={tz}
+                    action={
+                      e.type === "assignment" || e.type === "activity" ? (
+                        <CompleteButton eventId={e.id} title={e.title} />
+                      ) : undefined
+                    }
+                  />
                 ))}
               </ul>
             </section>

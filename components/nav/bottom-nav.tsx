@@ -23,7 +23,11 @@ function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function BottomNav() {
+export function BottomNav({
+  subjects,
+}: {
+  subjects: { id: string; name: string }[];
+}) {
   const pathname = usePathname();
   const [addOpen, setAddOpen] = useState(false);
 
@@ -72,7 +76,10 @@ export function BottomNav() {
         title="Nuevo evento"
         description="Entrega, actividad o examen"
       >
-        <AddEventForm onDone={() => setAddOpen(false)} />
+        <AddEventForm
+          subjects={subjects}
+          onDone={() => setAddOpen(false)}
+        />
       </Sheet>
     </>
   );
