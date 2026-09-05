@@ -12,7 +12,7 @@ const TYPES: { value: ManualEventType; label: string }[] = [
 ];
 
 const inputClass =
-  "h-11 w-full min-w-0 box-border rounded-xl border border-border bg-surface-2 px-3 text-sm text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint";
+  "h-11 w-full min-w-0 box-border rounded-xl border border-border bg-surface-2 px-3 text-[16px] text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint";
 const labelClass = "mb-1.5 block text-xs font-medium text-text-muted";
 
 function todayLocalDate(): string {
@@ -177,7 +177,7 @@ export function AddEventForm({
         </label>
         <textarea
           id="ev-desc"
-          className="min-h-[72px] w-full resize-none rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint"
+          className="min-h-[72px] w-full min-w-0 box-border resize-none rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-[16px] text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           maxLength={2000}

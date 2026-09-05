@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClass =
-  "h-11 w-full rounded-xl border border-border bg-surface-2 px-3 text-sm text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint";
+  "h-11 w-full min-w-0 box-border rounded-xl border border-border bg-surface-2 px-3 text-[16px] text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint";
 
 type Mode = "signin" | "signup";
 

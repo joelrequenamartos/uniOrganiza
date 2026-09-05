@@ -81,6 +81,37 @@ html {
   background: var(--bg);
   /* Prevent iOS text auto-inflation on rotation */
   -webkit-text-size-adjust: 100%;
+  overflow-x: clip;
+}
+
+/*
+ * iOS Safari form controls:
+ *  - font-size must be >= 16px or focusing zooms the page in (and doesn't
+ *    always zoom back, which looks like the layout "overflowing").
+ *  - date/time inputs need appearance:none to respect width and not use
+ *    their oversized intrinsic width.
+ */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+input::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+input::-webkit-datetime-edit {
+  padding: 0;
 }
 
 body {
