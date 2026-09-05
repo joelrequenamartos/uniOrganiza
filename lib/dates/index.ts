@@ -75,6 +75,19 @@ export function formatMonth(date: Date | string, tz: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/** e.g. "Septiembre 2026" */
+export function formatMonthYear(date: Date, tz: string): string {
+  void tz;
+  const s = format(date, "LLLL yyyy", { locale: es });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** e.g. "Jueves 4 de septiembre" */
+export function formatFullDay(date: Date): string {
+  const s = format(date, "EEEE d 'de' MMMM", { locale: es });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export function formatRange(startIso: string, endIso: string, tz: string): string {
   return `${formatTime(startIso, tz)} — ${formatTime(endIso, tz)}`;
 }

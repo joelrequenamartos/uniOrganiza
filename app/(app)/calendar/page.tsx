@@ -1,14 +1,18 @@
-import { EmptyState, ScreenHeader } from "@/components/ui/screen-header";
+import { MonthView } from "@/components/calendar/month-view";
+import { SubjectLegend } from "@/components/calendar/legend";
+import { getEvents, getSubjects } from "@/lib/data";
+import { DEFAULT_TIMEZONE } from "@/lib/dates";
 
-/** Calendario: vista mensual + diaria/semanal. Real content in Phase 5. */
-export default function CalendarPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CalendarPage() {
+  const tz = DEFAULT_TIMEZONE;
+  const [events, subjects] = await Promise.all([getEvents(), getSubjects()]);
+
   return (
     <>
-      <ScreenHeader title="Calendario" />
-      <EmptyState
-        title="Calendario en camino"
-        hint="Vista mensual con indicadores y vista diaria por horario — Fase 5."
-      />
+      <MonthView events={events} tz={tz} />
+      <SubjectLegend subjects={subjects} />
     </>
   );
 }
