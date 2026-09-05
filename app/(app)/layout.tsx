@@ -12,8 +12,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto min-h-dvh max-w-md">
       <main
-        className="px-5 pb-24"
-        style={{ paddingTop: "calc(var(--safe-top) + 12px)" }}
+        className="px-5"
+        style={{
+          paddingTop: "calc(var(--safe-top) + 12px)",
+          paddingBottom: "calc(var(--safe-bottom) + 104px)",
+        }}
       >
         {children}
       </main>

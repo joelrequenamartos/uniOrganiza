@@ -33,42 +33,46 @@ export function BottomNav({
 
   return (
     <>
-      <nav
-        className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-border bg-bg/85 backdrop-blur-xl"
-        style={{ paddingBottom: "var(--safe-bottom)" }}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md justify-center px-4"
+        style={{ paddingBottom: "calc(var(--safe-bottom) + 12px)" }}
       >
-        <ul className="flex items-stretch">
-          {ITEMS.map((item) => {
-            const active = isActive(pathname, item.href);
-            const Icon = item.icon;
-            return (
-              <li key={item.href} className="flex-1">
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className="flex h-14 flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors"
-                  style={{ color: active ? "var(--text)" : "var(--text-faint)" }}
-                >
-                  <Icon size={22} strokeWidth={active ? 2.4 : 2} />
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-          <li className="flex-1">
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="flex h-14 w-full flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide text-text-faint"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-contrast">
-                <Plus size={20} strokeWidth={2.6} />
-              </span>
-              Añadir
-            </button>
-          </li>
-        </ul>
-      </nav>
+        <nav className="pointer-events-auto w-full overflow-hidden rounded-2xl border border-border bg-surface/80 shadow-[0_8px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <ul className="flex items-stretch">
+            {ITEMS.map((item) => {
+              const active = isActive(pathname, item.href);
+              const Icon = item.icon;
+              return (
+                <li key={item.href} className="flex-1">
+                  <Link
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className="flex h-14 flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors"
+                    style={{
+                      color: active ? "var(--text)" : "var(--text-faint)",
+                    }}
+                  >
+                    <Icon size={22} strokeWidth={active ? 2.4 : 2} />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+            <li className="flex-1">
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="flex h-14 w-full flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide text-text-faint"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-contrast">
+                  <Plus size={20} strokeWidth={2.6} />
+                </span>
+                Añadir
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
 
       <Sheet
         open={addOpen}
