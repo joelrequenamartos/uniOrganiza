@@ -9,7 +9,17 @@ import { getPublicEnv } from "@/lib/env";
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const env = getPublicEnv();
+
+  let env: ReturnType<typeof getPublicEnv>;
+  try {
+    env = getPublicEnv();
+  } catch (err) {
+    // Misconfigured environment (missing Supabase vars). Don't 500 every route;
+    // let requests through so the failure is visible in the page, not a blank
+    // Internal Server Error.
+    console.error("[proxy] Supabase env not configured:", err);
+    return response;
+  }
 
   const supabase = createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
