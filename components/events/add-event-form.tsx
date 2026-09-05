@@ -12,7 +12,7 @@ const TYPES: { value: ManualEventType; label: string }[] = [
 ];
 
 const inputClass =
-  "h-11 w-full rounded-xl border border-border bg-surface-2 px-3 text-sm text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint";
+  "h-11 w-full min-w-0 box-border rounded-xl border border-border bg-surface-2 px-3 text-sm text-text outline-none transition-colors focus:border-border-strong placeholder:text-text-faint";
 const labelClass = "mb-1.5 block text-xs font-medium text-text-muted";
 
 function todayLocalDate(): string {
@@ -142,34 +142,33 @@ export function AddEventForm({
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="ev-date" className={labelClass}>
-            {dateLabel}
-          </label>
-          <input
-            id="ev-date"
-            type="date"
-            className={inputClass}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-          {fieldErrors.date && (
-            <p className="mt-1 text-xs text-type-exam">{fieldErrors.date}</p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="ev-time" className={labelClass}>
-            Hora <span className="text-text-faint">(opcional)</span>
-          </label>
-          <input
-            id="ev-time"
-            type="time"
-            className={inputClass}
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
-        </div>
+      <div>
+        <label htmlFor="ev-date" className={labelClass}>
+          {dateLabel}
+        </label>
+        <input
+          id="ev-date"
+          type="date"
+          className={inputClass}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+        {fieldErrors.date && (
+          <p className="mt-1 text-xs text-type-exam">{fieldErrors.date}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="ev-time" className={labelClass}>
+          Hora <span className="text-text-faint">(opcional)</span>
+        </label>
+        <input
+          id="ev-time"
+          type="time"
+          className={inputClass}
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+        />
       </div>
 
       <div>
