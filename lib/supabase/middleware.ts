@@ -5,7 +5,7 @@ import { getPublicEnv } from "@/lib/env";
 
 /**
  * Refreshes the Supabase auth session on every request and guards the app
- * routes. Wired up from the root `middleware.ts` (added in Phase 8).
+ * routes. Wired up from the root `proxy.ts`.
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

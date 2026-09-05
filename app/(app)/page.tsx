@@ -1,4 +1,5 @@
 import { ScreenHeader } from "@/components/ui/screen-header";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { WeekSection } from "@/components/dashboard/week-section";
 import { UpcomingSection } from "@/components/dashboard/upcoming-section";
 import { getEvents } from "@/lib/data";
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <ScreenHeader title={formatMonth(now, tz)} />
+      <ScreenHeader title={formatMonth(now, tz)} action={<SignOutButton />} />
       <WeekSection groups={week} tz={tz} />
       <UpcomingSection groups={upcoming} tz={tz} />
     </>
