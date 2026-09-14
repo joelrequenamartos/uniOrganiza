@@ -1,6 +1,7 @@
+import { Check } from "lucide-react";
 import type { AcademicEvent } from "@/types/domain";
 import { eventInstant } from "@/types/domain";
-import { EVENT_TYPE_META } from "@/lib/domain/type-meta";
+import { EVENT_TYPE_META, rowStyleFor } from "@/lib/domain/type-meta";
 import { formatRange, formatTime } from "@/lib/dates";
 import { SubjectDot } from "@/components/dashboard/subject-dot";
 
@@ -37,13 +38,29 @@ export function DayDetail({
               <li
                 key={e.id}
                 className="flex items-center gap-3 rounded-card border border-border bg-surface px-4 py-3"
+                style={{
+                  ...rowStyleFor(e.type),
+                  opacity: e.status === "completed" ? 0.6 : 1,
+                }}
               >
                 <span
                   className="h-8 w-0.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: e.subject?.color ?? "var(--border-strong)" }}
+                  style={{
+                    backgroundColor:
+                      e.type === "exam"
+                        ? "var(--type-exam)"
+                        : e.subject?.color ?? "var(--border-strong)",
+                  }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-text">
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-text">
+                    {e.status === "completed" && (
+                      <Check
+                        size={13}
+                        strokeWidth={3}
+                        className="shrink-0 text-type-activity"
+                      />
+                    )}
                     {e.type === "class" ? e.subject?.name ?? "Clase" : e.title}
                   </p>
                   <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-text-muted">

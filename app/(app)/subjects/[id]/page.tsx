@@ -22,7 +22,7 @@ export default async function SubjectDetailPage({
   const subject = await getSubject(id);
   if (!subject) notFound();
 
-  const events = await getEvents({ subjectId: id, includeCompleted: false });
+  const events = await getEvents({ subjectId: id });
   const sections = buildSubjectAgenda(events, tz);
 
   return (
@@ -48,8 +48,8 @@ export default async function SubjectDetailPage({
 
       {sections.length === 0 ? (
         <EmptyState
-          title="Nada pendiente en esta asignatura"
-          hint="Aquí verás sus próximas clases, entregas, exámenes y actividades."
+          title="Nada en esta asignatura todavía"
+          hint="Aquí verás sus clases, entregas, exámenes y actividades, pasadas y futuras."
         />
       ) : (
         <div className="flex flex-col gap-6">
@@ -58,20 +58,36 @@ export default async function SubjectDetailPage({
               <h2 className="mb-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
                 {EVENT_TYPE_META[section.type].plural}
               </h2>
-              <ul className="flex flex-col gap-2">
-                {section.events.map((e) => (
-                  <EventLine
-                    key={e.id}
-                    event={e}
-                    tz={tz}
-                    action={
-                      e.type === "assignment" || e.type === "activity" ? (
-                        <CompleteButton eventId={e.id} title={e.title} />
-                      ) : undefined
-                    }
-                  />
-                ))}
-              </ul>
+
+              {section.upcoming.length > 0 && (
+                <ul className="flex flex-col gap-2">
+                  {section.upcoming.map((e) => (
+                    <EventLine
+                      key={e.id}
+                      event={e}
+                      tz={tz}
+                      action={
+                        e.type === "assignment" || e.type === "activity" ? (
+                          <CompleteButton eventId={e.id} title={e.title} />
+                        ) : undefined
+                      }
+                    />
+                  ))}
+                </ul>
+              )}
+
+              {section.past.length > 0 && (
+                <div className={section.upcoming.length > 0 ? "mt-4" : undefined}>
+                  <h3 className="mb-2 text-[11px] font-medium text-text-faint">
+                    Anteriores
+                  </h3>
+                  <ul className="flex flex-col gap-2">
+                    {section.past.map((e) => (
+                      <EventLine key={e.id} event={e} tz={tz} muted />
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           ))}
         </div>

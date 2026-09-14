@@ -1,10 +1,13 @@
 /**
  * Splits a subject's events into the sections shown on its detail page:
- *   Próximas clases · Próximas entregas · Actividades · Exámenes
+ *   Clases · Entregas · Exámenes · Actividades
  *
- * "Upcoming" = anchored today or later (local tz). Pending assignments and
- * activities that are already overdue are kept so they don't silently vanish.
- * Past classes and past exams drop off. Pure.
+ * Each section keeps BOTH directions — nothing is ever dropped:
+ *   - upcoming: today or later, plus any pending assignment/activity that's
+ *     overdue (still needs action, so it stays with the actionable items)
+ *   - past: everything before today that isn't already counted as upcoming
+ *     (completed items, and past classes/exams), newest first
+ * Pure.
  */
 import { startOfDay } from "date-fns";
 import type { AcademicEvent, EventType } from "@/types/domain";
@@ -13,7 +16,8 @@ import { nowInTz, toTz } from "@/lib/dates";
 
 export interface AgendaSection {
   type: EventType;
-  events: AcademicEvent[];
+  upcoming: AcademicEvent[];
+  past: AcademicEvent[];
 }
 
 const ORDER: EventType[] = ["class", "assignment", "exam", "activity"];
@@ -25,22 +29,30 @@ export function buildSubjectAgenda(
 ): AgendaSection[] {
   const dayStart = startOfDay(now);
 
-  const upcoming = events.filter((e) => {
-    if (e.status === "completed") return false;
-    const instant = eventInstant(e);
-    if (!instant) return false;
+  const withInstant = events.filter((e) => eventInstant(e) !== null);
+
+  const isUpcoming = (e: AcademicEvent) => {
+    const instant = eventInstant(e)!;
     if (toTz(instant, tz) >= dayStart) return true;
-    return e.type === "assignment" || e.type === "activity"; // keep overdue
-  });
+    // Overdue and still pending: keep it actionable, not buried in history.
+    return (
+      e.status !== "completed" &&
+      (e.type === "assignment" || e.type === "activity")
+    );
+  };
 
-  upcoming.sort((a, b) => {
-    const ai = eventInstant(a) ?? "";
-    const bi = eventInstant(b) ?? "";
-    return ai.localeCompare(bi);
-  });
+  const byInstant = (e: AcademicEvent) => eventInstant(e) ?? "";
 
-  return ORDER.map((type) => ({
-    type,
-    events: upcoming.filter((e) => e.type === type),
-  })).filter((s) => s.events.length > 0);
+  return ORDER.map((type) => {
+    const items = withInstant.filter((e) => e.type === type);
+    return {
+      type,
+      upcoming: items
+        .filter(isUpcoming)
+        .sort((a, b) => byInstant(a).localeCompare(byInstant(b))),
+      past: items
+        .filter((e) => !isUpcoming(e))
+        .sort((a, b) => byInstant(b).localeCompare(byInstant(a))),
+    };
+  }).filter((s) => s.upcoming.length > 0 || s.past.length > 0);
 }

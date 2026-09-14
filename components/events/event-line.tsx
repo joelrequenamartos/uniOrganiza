@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Check } from "lucide-react";
 import type { AcademicEvent } from "@/types/domain";
 import { eventInstant } from "@/types/domain";
 import { EVENT_TYPE_META, rowStyleFor } from "@/lib/domain/type-meta";
@@ -10,11 +11,14 @@ export function EventLine({
   tz,
   showType = false,
   action,
+  muted = false,
 }: {
   event: AcademicEvent;
   tz: string;
   showType?: boolean;
   action?: ReactNode;
+  /** Dim the row for past/completed items shown as history. */
+  muted?: boolean;
 }) {
   const instant = eventInstant(event);
   const meta = EVENT_TYPE_META[event.type];
@@ -31,7 +35,7 @@ export function EventLine({
   return (
     <li
       className="flex items-center gap-3 rounded-card border border-border bg-surface px-4 py-3"
-      style={rowStyleFor(event.type)}
+      style={{ ...rowStyleFor(event.type), opacity: muted ? 0.6 : 1 }}
     >
       <span
         className="h-8 w-0.5 shrink-0 rounded-full"
@@ -53,6 +57,13 @@ export function EventLine({
             >
               Examen
             </span>
+          )}
+          {event.status === "completed" && (
+            <Check
+              size={13}
+              strokeWidth={3}
+              className="shrink-0 text-type-activity"
+            />
           )}
           {event.type === "class" ? event.subject?.name ?? "Clase" : event.title}
         </p>

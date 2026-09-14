@@ -56,7 +56,8 @@ export function buildMonthGrid(
 
   const byDay = new Map<string, AcademicEvent[]>();
   for (const e of events) {
-    if (e.status === "completed") continue;
+    // Completed events stay visible here — the calendar is the historical
+    // record; only the dashboard's alert lists hide finished items.
     const instant = eventInstant(e);
     if (!instant) continue;
     const key = dayKeyOf(toTz(instant, tz));
