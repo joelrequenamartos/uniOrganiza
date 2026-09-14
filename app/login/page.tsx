@@ -12,7 +12,10 @@ export default function LoginPage() {
       }}
     >
       <div className="mb-8">
-        <h1 className="text-xl font-semibold tracking-tight">uniOrganiza</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          {/* Plain anchor (not next/link): a full reload, not a client nav. */}
+          <a href="/login">uniOrganiza</a>
+        </h1>
         <p className="mt-1 text-sm text-text-muted">
           Tu universidad en una sola pantalla.
         </p>
