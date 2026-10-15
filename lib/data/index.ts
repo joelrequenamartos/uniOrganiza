@@ -4,6 +4,7 @@
  * Backed by Supabase through the request's session client, so Row Level
  * Security scopes every query to the signed-in user.
  */
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 import type { AcademicEvent, EventType, Subject } from "@/types/domain";
@@ -49,7 +50,9 @@ function toEvent(r: EventRow, subjects: Map<string, Subject>): AcademicEvent {
 async function requireUser() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) throw new Error("Not authenticated.");
+  // Session expired or lost: send the user to sign in rather than crashing
+  // the whole shell (layout errors bypass the segment error boundary).
+  if (error || !data.user) redirect("/login");
   return { supabase, userId: data.user.id };
 }
 
