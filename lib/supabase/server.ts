@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { getPublicEnv } from "@/lib/env";
 
@@ -7,10 +8,12 @@ import { getPublicEnv } from "@/lib/env";
  * Supabase client for Server Components, Route Handlers and Server Actions.
  * Reads/writes the auth session via Next's cookie store.
  */
-export async function createClient() {
+export async function createClient(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies();
   const env = getPublicEnv();
 
+  // @supabase/ssr 0.5 types its generics in the pre-2.x supabase-js order, which
+  // collapses the schema to `never`; re-assert the client type.
   return createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -37,5 +40,5 @@ export async function createClient() {
         },
       },
     },
-  );
+  ) as unknown as SupabaseClient<Database>;
 }

@@ -6,8 +6,7 @@ import { getEvents } from "@/lib/data";
 import { groupThisWeek, groupUpcomingByType } from "@/lib/domain/grouping";
 import { DEFAULT_TIMEZONE, formatMonth, nowInTz } from "@/lib/dates";
 
-// Fixtures compute dates relative to "now"; keep this off the static cache.
-// Becomes naturally dynamic once it reads the auth session (final phase).
+// Reads the auth session and live data; never statically cached.
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {

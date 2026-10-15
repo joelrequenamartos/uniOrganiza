@@ -1,23 +1,77 @@
 /**
  * Data-access layer. The rest of the app imports only from here.
  *
- * Reads/writes go through the temporary in-memory store (./store). When
- * Supabase is wired up (final phase) each function's body is replaced with a
- * query against `createClient()` — signatures and return types stay identical.
+ * Backed by Supabase through the request's session client, so Row Level
+ * Security scopes every query to the signed-in user.
  */
+import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 import type { AcademicEvent, EventType, Subject } from "@/types/domain";
-import { SUBJECTS } from "./fixtures";
 import { ensureSynced } from "./sync";
-import { addEvent, allEvents, updateEventStatus } from "./store";
 
-export const USING_FIXTURES = true;
+type SubjectRow = Database["public"]["Tables"]["subjects"]["Row"];
+type EventRow = Database["public"]["Tables"]["events"]["Row"];
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function toSubject(r: SubjectRow): Subject {
+  return {
+    id: r.id,
+    name: r.name,
+    color: r.color,
+    externalRef: r.external_ref,
+    createdAt: r.created_at,
+  };
+}
+
+function toEvent(r: EventRow, subjects: Map<string, Subject>): AcademicEvent {
+  const s = r.subject_id ? subjects.get(r.subject_id) : undefined;
+  return {
+    id: r.id,
+    subjectId: r.subject_id,
+    subject: s ? { id: s.id, name: s.name, color: s.color } : null,
+    type: r.type,
+    title: r.title,
+    description: r.description,
+    startAt: r.start_at,
+    endAt: r.end_at,
+    dueAt: r.due_at,
+    allDay: r.all_day,
+    status: r.status,
+    source: r.source,
+    externalId: r.external_id,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+async function requireUser() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) throw new Error("Not authenticated.");
+  return { supabase, userId: data.user.id };
+}
 
 export async function getSubjects(): Promise<Subject[]> {
-  return [...SUBJECTS].sort((a, b) => a.name.localeCompare(b.name, "es"));
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.from("subjects").select("*");
+  if (error) throw error;
+  return data
+    .map(toSubject)
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
 export async function getSubject(id: string): Promise<Subject | null> {
-  return SUBJECTS.find((s) => s.id === id) ?? null;
+  if (!UUID_RE.test(id)) return null;
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toSubject(data) : null;
 }
 
 export interface EventQuery {
@@ -30,8 +84,19 @@ export interface EventQuery {
 
 export async function getEvents(query: EventQuery = {}): Promise<AcademicEvent[]> {
   const { from, to, subjectId, types, includeCompleted = true } = query;
-  await ensureSynced();
-  return allEvents()
+  const { supabase, userId } = await requireUser();
+  await ensureSynced(supabase, userId);
+
+  const [subjectsRes, eventsRes] = await Promise.all([
+    supabase.from("subjects").select("*"),
+    supabase.from("events").select("*"),
+  ]);
+  if (subjectsRes.error) throw subjectsRes.error;
+  if (eventsRes.error) throw eventsRes.error;
+  const subjects = new Map(subjectsRes.data.map((s) => [s.id, toSubject(s)]));
+
+  return eventsRes.data
+    .map((r) => toEvent(r, subjects))
     .filter((e) => {
       if (subjectId && e.subjectId !== subjectId) return false;
       if (types && !types.includes(e.type)) return false;
@@ -59,41 +124,42 @@ export interface NewEventInput {
   allDay: boolean;
 }
 
-export async function createEvent(input: NewEventInput): Promise<AcademicEvent> {
-  const subject = input.subjectId
-    ? SUBJECTS.find((s) => s.id === input.subjectId) ?? null
-    : null;
-  const nowIso = new Date().toISOString();
-
-  const event: AcademicEvent = {
-    id:
-      globalThis.crypto?.randomUUID?.() ??
-      `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    subjectId: subject?.id ?? null,
-    subject: subject
-      ? { id: subject.id, name: subject.name, color: subject.color }
-      : null,
+export async function createEvent(input: NewEventInput): Promise<void> {
+  const { supabase, userId } = await requireUser();
+  const isAssignment = input.type === "assignment";
+  const { error } = await supabase.from("events").insert({
+    user_id: userId,
+    subject_id: input.subjectId,
     type: input.type,
     title: input.title,
     description: input.description,
-    startAt: input.type === "assignment" ? null : input.instant,
-    endAt: null,
-    dueAt: input.type === "assignment" ? input.instant : null,
-    allDay: input.allDay,
+    start_at: isAssignment ? null : input.instant,
+    due_at: isAssignment ? input.instant : null,
+    all_day: input.allDay,
     status: "pending",
     source: "manual",
-    externalId: null,
-    createdAt: nowIso,
-    updatedAt: nowIso,
-  };
-
-  addEvent(event);
-  return event;
+  });
+  if (error) throw error;
 }
 
 export async function setEventStatus(
   id: string,
   status: "pending" | "completed",
 ): Promise<void> {
-  updateEventStatus(id, status);
+  if (!UUID_RE.test(id)) throw new Error("Invalid event id.");
+  const { supabase } = await requireUser();
+  // Manual events toggle pending <-> completed. Imported ones keep their
+  // "read_only" resting state, so undoing "done" returns to read_only.
+  const manual = await supabase
+    .from("events")
+    .update({ status })
+    .eq("id", id)
+    .eq("source", "manual");
+  if (manual.error) throw manual.error;
+  const university = await supabase
+    .from("events")
+    .update({ status: status === "completed" ? "completed" : "read_only" })
+    .eq("id", id)
+    .eq("source", "university");
+  if (university.error) throw university.error;
 }

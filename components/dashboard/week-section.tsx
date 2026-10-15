@@ -3,6 +3,7 @@ import { EVENT_TYPE_META, rowStyleFor } from "@/lib/domain/type-meta";
 import { eventInstant } from "@/types/domain";
 import { formatDayShort, formatRange, formatTime } from "@/lib/dates";
 import { SubjectDot } from "./subject-dot";
+import { CompleteButton } from "@/components/events/complete-button";
 
 export function WeekSection({
   groups,
@@ -92,6 +93,12 @@ export function WeekSection({
                   <div className="shrink-0 text-xs tabular-nums text-text-muted">
                     {timeLabel}
                   </div>
+                  {!isExam && (
+                    <CompleteButton
+                      eventId={e.id}
+                      title={e.type === "class" ? (e.subject?.name ?? "Clase") : e.title}
+                    />
+                  )}
                 </li>
               );
             }),

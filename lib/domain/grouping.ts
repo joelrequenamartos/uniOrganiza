@@ -2,7 +2,7 @@
  * Turns a flat list of events into the dashboard's two sections:
  *   1. "Esta semana"  — every event in the current Mon–Sun week, grouped by day.
  *   2. "Próximamente" — the alert block, grouped by type in priority order:
- *        Entregas -> Exámenes -> Actividades -> Clases
+ *        Entregas -> Exámenes -> Clases -> Actividades
  *
  * Pure. No I/O.
  */
@@ -23,7 +23,7 @@ export interface TypeGroup {
   items: PrioritizedEvent[];
 }
 
-const TYPE_ORDER: EventType[] = ["assignment", "exam", "activity", "class"];
+const TYPE_ORDER: EventType[] = ["assignment", "exam", "class", "activity"];
 
 export function groupThisWeek(
   events: AcademicEvent[],

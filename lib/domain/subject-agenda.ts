@@ -20,7 +20,7 @@ export interface AgendaSection {
   past: AcademicEvent[];
 }
 
-const ORDER: EventType[] = ["class", "assignment", "exam", "activity"];
+const ORDER: EventType[] = ["class", "activity", "assignment", "exam"];
 
 export function buildSubjectAgenda(
   events: AcademicEvent[],

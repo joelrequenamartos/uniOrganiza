@@ -67,7 +67,7 @@ export default async function SubjectDetailPage({
                       event={e}
                       tz={tz}
                       action={
-                        e.type === "assignment" || e.type === "activity" ? (
+                        e.type !== "exam" ? (
                           <CompleteButton eventId={e.id} title={e.title} />
                         ) : undefined
                       }

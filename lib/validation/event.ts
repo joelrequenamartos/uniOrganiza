@@ -13,7 +13,6 @@ export type ManualEventType = z.infer<typeof manualEventType>;
 const baseFields = {
   type: manualEventType,
   title: z.string().trim().min(1, "El nombre es obligatorio").max(200),
-  // Not .uuid(): fixture ids are slugs today, real UUIDs after Phase 10.
   // Referential integrity is enforced by the DB FK + RLS.
   subjectId: z.string().min(1).nullable().default(null),
   description: z.string().trim().max(2000).nullable().default(null),

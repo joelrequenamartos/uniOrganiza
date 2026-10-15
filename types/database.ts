@@ -8,7 +8,7 @@ export type EventTypeDb = "class" | "assignment" | "activity" | "exam";
 export type EventSourceDb = "manual" | "university";
 export type EventStatusDb = "pending" | "completed" | "read_only";
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -100,6 +100,7 @@ export interface Database {
           {
             foreignKeyName: "events_subject_id_fkey";
             columns: ["subject_id"];
+            isOneToOne: false;
             referencedRelation: "subjects";
             referencedColumns: ["id"];
           },
@@ -139,13 +140,13 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Views: { [_ in never]: never };
+    Functions: { [_ in never]: never };
     Enums: {
       event_type: EventTypeDb;
       event_source: EventSourceDb;
       event_status: EventStatusDb;
     };
-    CompositeTypes: Record<string, never>;
+    CompositeTypes: { [_ in never]: never };
   };
 }

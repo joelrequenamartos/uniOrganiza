@@ -1,50 +1,147 @@
 /**
- * University calendar sync. The feed URL (it embeds a private token) comes from
- * the UNIVERSITY_ICS_URL env var — never commit it.
+ * University calendar sync into Supabase.
  *
- * The store is in-memory, so the sync runs lazily: at most once per TTL, on the
- * first read after it expires. Failures keep whatever was synced before.
+ * The feed URL (it embeds a private token) comes from the UNIVERSITY_ICS_URL
+ * env var — never commit it. The last sync time lives in `external_calendars`,
+ * so every server instance shares the same throttle.
+ *
+ * Rules: events are upserted by (source, external_id); imported events that
+ * disappear from the feed are kept if already past (history), and removed if
+ * still in the future (cancelled / moved).
  */
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCalendarProvider, type ExternalEvent } from "@/lib/calendar";
-import type { AcademicEvent, EventType } from "@/types/domain";
-import { SUBJECTS } from "./fixtures";
-import { replaceUniversityEvents } from "./store";
+import type { Database } from "@/types/database";
+import type { EventType } from "@/types/domain";
+
+type Client = SupabaseClient<Database>;
+type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
 
 const TTL_MS = 15 * 60 * 1000;
 const RETRY_MS = 60 * 1000;
 
-let nextSyncAt = 0;
-let inFlight: Promise<void> | null = null;
+/** Per-instance backoff after a failed download, so pages don't each wait. */
+let retryAfter = 0;
+const inFlight = new Map<string, Promise<void>>();
 
-export function ensureSynced(): Promise<void> {
-  if (Date.now() < nextSyncAt) return Promise.resolve();
-  inFlight ??= sync().finally(() => {
-    inFlight = null;
-  });
-  return inFlight;
+export function ensureSynced(supabase: Client, userId: string): Promise<void> {
+  if (!process.env.UNIVERSITY_ICS_URL || Date.now() < retryAfter) {
+    return Promise.resolve();
+  }
+  let p = inFlight.get(userId);
+  if (!p) {
+    p = sync(supabase, userId)
+      .catch((err) => {
+        console.error("[calendar sync] failed:", err);
+        retryAfter = Date.now() + RETRY_MS;
+      })
+      .finally(() => inFlight.delete(userId));
+    inFlight.set(userId, p);
+  }
+  return p;
 }
 
-async function sync(): Promise<void> {
-  const url = process.env.UNIVERSITY_ICS_URL;
-  if (!url) {
-    nextSyncAt = Date.now() + TTL_MS;
+async function sync(supabase: Client, userId: string): Promise<void> {
+  const url = process.env.UNIVERSITY_ICS_URL!;
+
+  const { data: cal, error: calErr } = await supabase
+    .from("external_calendars")
+    .select("id,last_synced_at")
+    .eq("provider", "ics")
+    .maybeSingle();
+  if (calErr) throw calErr;
+  if (
+    cal?.last_synced_at &&
+    Date.now() - new Date(cal.last_synced_at).getTime() < TTL_MS
+  ) {
     return;
   }
-  try {
-    const { events } = await getCalendarProvider("ics").fetchEvents({
-      id: "university",
-      kind: "ics",
-      url,
-      name: "Universidad",
-      lastSyncedAt: null,
-      syncState: null,
-    });
-    replaceUniversityEvents(events.map(toAcademicEvent));
-    nextSyncAt = Date.now() + TTL_MS;
-  } catch (err) {
-    console.error("[calendar sync] failed:", err);
-    nextSyncAt = Date.now() + RETRY_MS;
+
+  const { events } = await getCalendarProvider("ics").fetchEvents({
+    id: cal?.id ?? "university",
+    kind: "ics",
+    url,
+    name: "Universidad",
+    lastSyncedAt: cal?.last_synced_at ?? null,
+    syncState: null,
+  });
+
+  const [subjectsRes, existingRes] = await Promise.all([
+    supabase.from("subjects").select("id,external_ref"),
+    supabase
+      .from("events")
+      .select("id,external_id")
+      .eq("source", "university"),
+  ]);
+  if (subjectsRes.error) throw subjectsRes.error;
+  if (existingRes.error) throw existingRes.error;
+
+  const subjectByRef = new Map(
+    subjectsRes.data.flatMap((s) =>
+      s.external_ref ? [[s.external_ref, s.id] as const] : [],
+    ),
+  );
+  const idByExternal = new Map(
+    existingRes.data.flatMap((e) =>
+      e.external_id ? [[e.external_id, e.id] as const] : [],
+    ),
+  );
+
+  const toInsert: EventInsert[] = [];
+  const toUpdate: EventInsert[] = [];
+  for (const e of events) {
+    const row = toRow(e, userId, subjectByRef);
+    const existingId = idByExternal.get(e.uid);
+    if (existingId) {
+      // Keep the user's "done" mark: never touch status on refresh.
+      const rest: EventInsert = { ...row, id: existingId };
+      delete rest.status;
+      toUpdate.push(rest);
+    } else {
+      toInsert.push(row);
+    }
   }
+
+  if (toInsert.length) {
+    const { error } = await supabase.from("events").insert(toInsert);
+    if (error) throw error;
+  }
+  if (toUpdate.length) {
+    const { error } = await supabase
+      .from("events")
+      .upsert(toUpdate, { onConflict: "id" });
+    if (error) throw error;
+  }
+
+  // Cancelled / moved: gone from the feed and still upcoming. Guarded against
+  // an empty feed so a bad response can't wipe the calendar.
+  if (events.length > 0) {
+    const stale = existingRes.data
+      .filter((e) => e.external_id && !events.some((x) => x.uid === e.external_id))
+      .map((e) => e.id);
+    if (stale.length) {
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .in("id", stale)
+        .gt("start_at", new Date().toISOString());
+      if (error) throw error;
+    }
+  }
+
+  const nowIso = new Date().toISOString();
+  const { error } = cal
+    ? await supabase
+        .from("external_calendars")
+        .update({ last_synced_at: nowIso })
+        .eq("id", cal.id)
+    : await supabase.from("external_calendars").insert({
+        user_id: userId,
+        provider: "ics",
+        name: "Universidad",
+        last_synced_at: nowIso,
+      });
+  if (error) throw error;
 }
 
 function classify(title: string): EventType {
@@ -53,27 +150,25 @@ function classify(title: string): EventType {
   return "activity";
 }
 
-function toAcademicEvent(e: ExternalEvent): AcademicEvent {
+function toRow(
+  e: ExternalEvent,
+  userId: string,
+  subjectByRef: Map<string, string>,
+): EventInsert {
   const code = e.subjectHint?.match(/_(\d{5}):/)?.[1];
-  const subject = code ? SUBJECTS.find((s) => s.externalRef === code) : undefined;
-  const now = new Date().toISOString();
+  const subjectId = code ? (subjectByRef.get(code) ?? null) : null;
   return {
-    id: `uni-${e.uid}`,
-    subjectId: subject?.id ?? null,
-    subject: subject
-      ? { id: subject.id, name: subject.name, color: subject.color }
-      : null,
+    user_id: userId,
+    subject_id: subjectId,
     type: classify(e.title),
     title: e.title,
-    description: subject ? null : e.description,
-    startAt: e.startAt,
-    endAt: e.endAt,
-    dueAt: null,
-    allDay: e.allDay,
+    description: subjectId ? null : e.description,
+    start_at: e.startAt,
+    end_at: e.endAt,
+    due_at: null,
+    all_day: e.allDay,
     status: "read_only",
     source: "university",
-    externalId: e.uid,
-    createdAt: now,
-    updatedAt: now,
+    external_id: e.uid,
   };
 }

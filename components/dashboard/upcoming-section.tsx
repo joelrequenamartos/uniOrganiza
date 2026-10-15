@@ -50,7 +50,7 @@ export function UpcomingSection({
 function UpcomingRow({ item, tz }: { item: PrioritizedEvent; tz: string }) {
   const { event, priority } = item;
   const instant = event.dueAt ?? event.startAt!;
-  const canComplete = event.type === "assignment" || event.type === "activity";
+  const canComplete = event.type !== "exam";
   const isExam = event.type === "exam";
   const barColor = isExam ? "var(--type-exam)" : PRIORITY_COLOR[priority];
 
