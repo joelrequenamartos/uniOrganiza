@@ -24,8 +24,11 @@ export interface DayCell {
   inMonth: boolean;
   isToday: boolean;
   events: AcademicEvent[];
-  /** Distinct subject colours present that day, in first-seen order. */
-  subjectColors: string[];
+  /**
+   * Distinct subject colours present that day, in first-seen order. A colour is
+   * `done` (rendered dimmed) only when every event of that colour is completed.
+   */
+  subjectDots: { color: string; done: boolean }[];
 }
 
 export interface MonthGrid {
@@ -75,10 +78,14 @@ export function buildMonthGrid(
       const bi = eventInstant(b) ?? "";
       return ai.localeCompare(bi);
     });
-    const subjectColors: string[] = [];
+    const subjectDots: { color: string; done: boolean }[] = [];
     for (const e of dayEvents) {
       const c = e.subject?.color;
-      if (c && !subjectColors.includes(c)) subjectColors.push(c);
+      if (!c) continue;
+      const done = e.status === "completed";
+      const dot = subjectDots.find((d) => d.color === c);
+      if (dot) dot.done = dot.done && done;
+      else subjectDots.push({ color: c, done });
     }
     return {
       key,
@@ -86,7 +93,7 @@ export function buildMonthGrid(
       inMonth: d.getMonth() === month,
       isToday: key === todayKey,
       events: dayEvents,
-      subjectColors,
+      subjectDots,
     };
   });
 

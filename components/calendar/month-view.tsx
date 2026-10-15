@@ -138,11 +138,11 @@ function DayButton({
     >
       <span>{cell.dayOfMonth}</span>
       <span className="flex h-1.5 items-center gap-0.5">
-        {cell.subjectColors.slice(0, MAX_DOTS).map((c, i) => (
+        {cell.subjectDots.slice(0, MAX_DOTS).map((d, i) => (
           <span
             key={i}
             className="h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: c }}
+            style={{ backgroundColor: d.color, opacity: d.done ? 0.3 : 1 }}
           />
         ))}
       </span>

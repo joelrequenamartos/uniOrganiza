@@ -11,18 +11,22 @@ export type EventSource = "manual" | "university";
 /** 'read_only' is reserved for imported university events. */
 export type EventStatus = "pending" | "completed" | "read_only";
 
+import type { Term } from "@/lib/domain/subject-term";
+
 export interface Subject {
   id: string;
   name: string;
   color: string; // hex
   externalRef: string | null;
+  /** Cuatrimestre (1 or 2), derived from the subject code. */
+  term: Term | null;
   createdAt: string; // ISO
 }
 
 export interface AcademicEvent {
   id: string;
   subjectId: string | null;
-  subject: Pick<Subject, "id" | "name" | "color"> | null;
+  subject: Pick<Subject, "id" | "name" | "color" | "term"> | null;
   type: EventType;
   title: string;
   description: string | null;

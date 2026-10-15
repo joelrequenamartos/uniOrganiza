@@ -3,6 +3,7 @@ import type { AcademicEvent } from "@/types/domain";
 import { eventInstant } from "@/types/domain";
 import { EVENT_TYPE_META, rowStyleFor } from "@/lib/domain/type-meta";
 import { formatRange, formatTime } from "@/lib/dates";
+import { termLabel } from "@/lib/domain/subject-term";
 import { SubjectDot } from "@/components/dashboard/subject-dot";
 
 export function DayDetail({
@@ -40,7 +41,7 @@ export function DayDetail({
                 className="flex items-center gap-3 rounded-card border border-border bg-surface px-4 py-3"
                 style={{
                   ...rowStyleFor(e.type),
-                  opacity: e.status === "completed" ? 0.6 : 1,
+                  opacity: e.status === "completed" ? 0.5 : 1,
                 }}
               >
                 <span
@@ -53,7 +54,13 @@ export function DayDetail({
                   }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-text">
+                  <p
+                    className={`flex items-center gap-1.5 truncate text-sm font-medium ${
+                      e.status === "completed"
+                        ? "text-text-muted line-through"
+                        : "text-text"
+                    }`}
+                  >
                     {e.status === "completed" && (
                       <Check
                         size={13}
@@ -61,7 +68,11 @@ export function DayDetail({
                         className="shrink-0 text-type-activity"
                       />
                     )}
-                    {e.type === "class" ? e.subject?.name ?? "Clase" : e.title}
+                    {e.type === "class"
+                      ? e.subject
+                        ? termLabel(e.subject)
+                        : "Clase"
+                      : e.title}
                   </p>
                   <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-text-muted">
                     <span style={{ color: meta.cssVar }}>{meta.label}</span>
@@ -69,7 +80,7 @@ export function DayDetail({
                       <>
                         <span aria-hidden>·</span>
                         <SubjectDot color={e.subject.color} size={6} />
-                        <span className="truncate">{e.subject.name}</span>
+                        <span className="truncate">{termLabel(e.subject)}</span>
                       </>
                     )}
                   </p>

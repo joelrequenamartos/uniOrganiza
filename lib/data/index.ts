@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 import type { AcademicEvent, EventType, Subject } from "@/types/domain";
+import { termOf } from "@/lib/domain/subject-term";
 import { ensureSynced } from "./sync";
 
 type SubjectRow = Database["public"]["Tables"]["subjects"]["Row"];
@@ -22,6 +23,7 @@ function toSubject(r: SubjectRow): Subject {
     name: r.name,
     color: r.color,
     externalRef: r.external_ref,
+    term: termOf(r.external_ref),
     createdAt: r.created_at,
   };
 }
@@ -31,7 +33,9 @@ function toEvent(r: EventRow, subjects: Map<string, Subject>): AcademicEvent {
   return {
     id: r.id,
     subjectId: r.subject_id,
-    subject: s ? { id: s.id, name: s.name, color: s.color } : null,
+    subject: s
+      ? { id: s.id, name: s.name, color: s.color, term: s.term }
+      : null,
     type: r.type,
     title: r.title,
     description: r.description,
