@@ -1,9 +1,8 @@
 /**
- * ICS feed provider — STUB.
- *
- * Implemented in Phase 9 once we know the university's feed format.
- * Kept here so the abstraction has at least one concrete shape to check against.
+ * ICS feed provider: downloads the university's iCalendar feed and parses it.
  */
+import { DEFAULT_TIMEZONE } from "@/lib/dates";
+import { parseIcs } from "./ics-parser";
 import type {
   CalendarConnection,
   CalendarProvider,
@@ -13,7 +12,14 @@ import type {
 export class IcsProvider implements CalendarProvider {
   readonly kind = "ics" as const;
 
-  async fetchEvents(_connection: CalendarConnection): Promise<FetchResult> {
-    throw new Error("IcsProvider.fetchEvents not implemented yet (Phase 9).");
+  async fetchEvents(connection: CalendarConnection): Promise<FetchResult> {
+    if (!connection.url) throw new Error("ICS connection has no URL.");
+    const res = await fetch(connection.url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`ICS feed responded ${res.status}.`);
+    const events = parseIcs(await res.text(), DEFAULT_TIMEZONE);
+    return { events, nextSyncState: null };
   }
 }

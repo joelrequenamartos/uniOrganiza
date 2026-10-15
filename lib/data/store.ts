@@ -1,18 +1,22 @@
 /**
  * TEMPORARY in-memory event store.
  *
- * Holds the fixture events plus anything created through the app during this
- * server process. It is NOT persisted — restarting the dev server resets it.
+ * Holds events synced from the university feed plus anything created through
+ * the app during this server process. It is NOT persisted — restarting the dev server resets it.
  * Phase 10 replaces this module with Supabase queries; the data-access API in
  * ./index.ts stays the same.
  */
 import type { AcademicEvent } from "@/types/domain";
-import { EVENTS } from "./fixtures";
 
-let events: AcademicEvent[] = EVENTS.map((e) => ({ ...e }));
+let events: AcademicEvent[] = [];
 
 export function allEvents(): AcademicEvent[] {
   return events;
+}
+
+/** Swap the imported university events for a fresh sync; manual ones stay. */
+export function replaceUniversityEvents(incoming: AcademicEvent[]): void {
+  events = [...events.filter((e) => e.source !== "university"), ...incoming];
 }
 
 export function addEvent(event: AcademicEvent): void {

@@ -7,6 +7,7 @@
  */
 import type { AcademicEvent, EventType, Subject } from "@/types/domain";
 import { SUBJECTS } from "./fixtures";
+import { ensureSynced } from "./sync";
 import { addEvent, allEvents, updateEventStatus } from "./store";
 
 export const USING_FIXTURES = true;
@@ -29,6 +30,7 @@ export interface EventQuery {
 
 export async function getEvents(query: EventQuery = {}): Promise<AcademicEvent[]> {
   const { from, to, subjectId, types, includeCompleted = true } = query;
+  await ensureSynced();
   return allEvents()
     .filter((e) => {
       if (subjectId && e.subjectId !== subjectId) return false;
