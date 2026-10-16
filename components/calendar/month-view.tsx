@@ -1,5 +1,6 @@
 "use client";
 
+import { ProfileLink } from "@/components/nav/profile-link";
 import { useMemo, useState } from "react";
 import { TZDate } from "@date-fns/tz";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -51,9 +52,12 @@ export function MonthView({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h1 className="text-[22px] font-semibold tracking-tight">
-          {formatMonthYear(new Date(cursor.year, cursor.month, 1), tz)}
-        </h1>
+        <div className="flex min-w-0 items-center gap-3">
+          <ProfileLink />
+          <h1 className="truncate text-[22px] font-semibold tracking-tight">
+            {formatMonthYear(new Date(cursor.year, cursor.month, 1), tz)}
+          </h1>
+        </div>
         <div className="flex gap-1">
           <NavBtn label="Mes anterior" onClick={() => shiftMonth(-1)}>
             <ChevronLeft size={18} />

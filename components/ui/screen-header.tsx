@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ProfileLink } from "@/components/nav/profile-link";
 
 export function ScreenHeader({
   title,
@@ -9,7 +10,12 @@ export function ScreenHeader({
 }) {
   return (
     <header className="mb-5 flex items-center justify-between">
-      <h1 className="text-[22px] font-semibold tracking-tight">{title}</h1>
+      <div className="flex min-w-0 items-center gap-3">
+        <ProfileLink />
+        <h1 className="truncate text-[22px] font-semibold tracking-tight">
+          {title}
+        </h1>
+      </div>
       {action}
     </header>
   );
