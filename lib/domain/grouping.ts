@@ -61,21 +61,50 @@ export function groupThisWeek(
     }));
 }
 
-export function groupUpcomingByType(
+function prioritizedForDashboard(
   events: AcademicEvent[],
   tz: string,
-  now = nowInTz(tz),
-): TypeGroup[] {
+  now: ReturnType<typeof nowInTz>,
+): PrioritizedEvent[] {
   const { start: weekStart } = localWeekRange(now);
   // Past items from the current week are already listed under "Esta semana".
-  const prioritized = selectUpcoming(events, tz, now).filter((p) => {
+  return selectUpcoming(events, tz, now).filter((p) => {
     if (p.priority !== "overdue") return true;
     if (p.event.type !== "class" && p.event.type !== "activity") return true;
     const instant = eventInstant(p.event);
     return !instant || toTz(instant, tz) < weekStart;
   });
+}
+
+function byType(items: PrioritizedEvent[]): TypeGroup[] {
   return TYPE_ORDER.map((type) => ({
     type,
-    items: prioritized.filter((p) => p.event.type === type),
+    items: items.filter((p) => p.event.type === type),
   })).filter((g) => g.items.length > 0);
+}
+
+/** "Atrasadas": past, not marked done. Shown first, in red. */
+export function groupOverdueByType(
+  events: AcademicEvent[],
+  tz: string,
+  now = nowInTz(tz),
+): TypeGroup[] {
+  return byType(
+    prioritizedForDashboard(events, tz, now).filter(
+      (p) => p.priority === "overdue",
+    ),
+  );
+}
+
+/** "Próximamente": genuinely upcoming (within the alert horizon). */
+export function groupUpcomingByType(
+  events: AcademicEvent[],
+  tz: string,
+  now = nowInTz(tz),
+): TypeGroup[] {
+  return byType(
+    prioritizedForDashboard(events, tz, now).filter(
+      (p) => p.priority !== "overdue",
+    ),
+  );
 }

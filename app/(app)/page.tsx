@@ -3,7 +3,11 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { WeekSection } from "@/components/dashboard/week-section";
 import { UpcomingSection } from "@/components/dashboard/upcoming-section";
 import { getEvents } from "@/lib/data";
-import { groupThisWeek, groupUpcomingByType } from "@/lib/domain/grouping";
+import {
+  groupOverdueByType,
+  groupThisWeek,
+  groupUpcomingByType,
+} from "@/lib/domain/grouping";
 import { DEFAULT_TIMEZONE, formatMonth, nowInTz } from "@/lib/dates";
 
 // Reads the auth session and live data; never statically cached.
@@ -16,8 +20,10 @@ export default async function DashboardPage() {
   const events = await getEvents({ includeCompleted: false });
 
   const week = groupThisWeek(events, tz, now);
+  const overdue = groupOverdueByType(events, tz, now);
   const upcoming = groupUpcomingByType(events, tz, now);
-  const nothing = week.length === 0 && upcoming.length === 0;
+  const nothing =
+    overdue.length === 0 && week.length === 0 && upcoming.length === 0;
 
   return (
     <>
@@ -29,6 +35,9 @@ export default async function DashboardPage() {
         />
       ) : (
         <>
+          {overdue.length > 0 && (
+            <UpcomingSection groups={overdue} tz={tz} variant="overdue" />
+          )}
           <WeekSection groups={week} tz={tz} />
           <UpcomingSection groups={upcoming} tz={tz} />
         </>

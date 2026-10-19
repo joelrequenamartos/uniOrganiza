@@ -13,14 +13,31 @@ import { CompleteButton } from "@/components/events/complete-button";
 export function UpcomingSection({
   groups,
   tz,
+  variant = "upcoming",
 }: {
   groups: TypeGroup[];
   tz: string;
+  variant?: "upcoming" | "overdue";
 }) {
+  const overdue = variant === "overdue";
+  const count = groups.reduce((n, g) => n + g.items.length, 0);
   return (
-    <section className="mb-4">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
-        Próximamente
+    <section className="mb-8">
+      <h2
+        className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em]"
+        style={{ color: overdue ? "var(--prio-overdue)" : "var(--text-muted)" }}
+      >
+        {overdue ? "Atrasadas" : "Próximamente"}
+        {overdue && (
+          <span
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+            style={{
+              background: "color-mix(in srgb, var(--prio-overdue) 18%, transparent)",
+            }}
+          >
+            {count}
+          </span>
+        )}
       </h2>
 
       {groups.length === 0 ? (
@@ -57,7 +74,16 @@ function UpcomingRow({ item, tz }: { item: PrioritizedEvent; tz: string }) {
   return (
     <li
       className="flex items-center gap-3 rounded-card border border-border bg-surface py-3 pl-3 pr-4"
-      style={rowStyleFor(event.type)}
+      style={
+        priority === "overdue"
+          ? {
+              borderColor:
+                "color-mix(in srgb, var(--prio-overdue) 40%, var(--border))",
+              background:
+                "color-mix(in srgb, var(--prio-overdue) 7%, var(--surface))",
+            }
+          : rowStyleFor(event.type)
+      }
     >
       <span
         className="h-9 w-1 shrink-0 rounded-full"
