@@ -12,6 +12,7 @@ export function EventLine({
   showType = false,
   action,
   muted = false,
+  attention = false,
 }: {
   event: AcademicEvent;
   tz: string;
@@ -19,6 +20,8 @@ export function EventLine({
   action?: ReactNode;
   /** Dim the row for past/completed items shown as history. */
   muted?: boolean;
+  /** Past and not done: tint red and tag "Sin ver". */
+  attention?: boolean;
 }) {
   const instant = eventInstant(event);
   const meta = EVENT_TYPE_META[event.type];
@@ -35,7 +38,18 @@ export function EventLine({
   return (
     <li
       className="flex items-center gap-3 rounded-card border border-border bg-surface px-4 py-3"
-      style={{ ...rowStyleFor(event.type), opacity: muted ? 0.6 : 1 }}
+      style={{
+        ...rowStyleFor(event.type),
+        ...(attention
+          ? {
+              borderColor:
+                "color-mix(in srgb, var(--prio-overdue) 40%, var(--border))",
+              background:
+                "color-mix(in srgb, var(--prio-overdue) 7%, var(--surface))",
+            }
+          : null),
+        opacity: muted ? 0.6 : 1,
+      }}
     >
       <span
         className="h-8 w-0.5 shrink-0 rounded-full"
@@ -71,6 +85,12 @@ export function EventLine({
           {showType && <span style={{ color: meta.cssVar }}>{meta.label}</span>}
           {showType && instant && <span aria-hidden>·</span>}
           {instant && <span>{formatDayMonth(instant, tz)}</span>}
+          {attention && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="font-semibold text-prio-overdue">Sin ver</span>
+            </>
+          )}
         </p>
         {event.description && (
           <p className="mt-0.5 truncate text-xs text-text-faint">

@@ -56,6 +56,7 @@
   --color-type-exam: var(--type-exam);
   --color-type-activity: var(--type-activity);
   --color-type-class: var(--type-class);
+  --color-prio-overdue: var(--prio-overdue);
 
   --radius-card: var(--radius);
   --font-sans:
