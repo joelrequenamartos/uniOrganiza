@@ -66,7 +66,14 @@ export function groupUpcomingByType(
   tz: string,
   now = nowInTz(tz),
 ): TypeGroup[] {
-  const prioritized = selectUpcoming(events, tz, now);
+  const { start: weekStart } = localWeekRange(now);
+  // Past items from the current week are already listed under "Esta semana".
+  const prioritized = selectUpcoming(events, tz, now).filter((p) => {
+    if (p.priority !== "overdue") return true;
+    if (p.event.type !== "class" && p.event.type !== "activity") return true;
+    const instant = eventInstant(p.event);
+    return !instant || toTz(instant, tz) < weekStart;
+  });
   return TYPE_ORDER.map((type) => ({
     type,
     items: prioritized.filter((p) => p.event.type === type),

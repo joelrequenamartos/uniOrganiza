@@ -7,7 +7,8 @@
  *   <= 7   -> medium
  *   <= 2   -> high
  *   == 0   -> max       (due / exam today)
- *   past   -> overdue for pending assignments/activities; hidden for exams/classes
+ *   past   -> overdue (stays on screen until marked done) for everything except
+ *             exams, which have no "done" action and simply drop off
  *   completed -> never shown as pending
  */
 import type {
@@ -33,11 +34,10 @@ export function computePriority(
   const d = daysUntil(instant, tz, now);
 
   if (d < 0) {
-    // Past. Exams and classes simply drop off. Pending deliverables become overdue.
-    if (event.type === "assignment" || event.type === "activity") {
-      return { event, priority: "overdue", daysUntil: d };
-    }
-    return null;
+    // Past. Nothing the user can tick off disappears on its own: it stays,
+    // flagged overdue, until marked done. Exams have no "done", so they drop off.
+    if (event.type === "exam") return null;
+    return { event, priority: "overdue", daysUntil: d };
   }
 
   let priority: PriorityLevel;
@@ -77,6 +77,7 @@ export function selectUpcoming(
 export function priorityLabel(p: PrioritizedEvent): string {
   if (p.priority === "overdue") {
     const n = Math.abs(p.daysUntil);
+    if (p.event.type === "class") return n === 1 ? "Hace 1 día" : `Hace ${n} días`;
     return n === 1 ? "Atrasada 1 día" : `Atrasada ${n} días`;
   }
   if (p.daysUntil === 0) return "Hoy";
