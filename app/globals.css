@@ -121,9 +121,12 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* App-like: no rubber-band overscroll bleed, no horizontal scroll */
-  overscroll-behavior-y: none;
-  overflow-x: hidden;
+  /*
+   * No horizontal scroll. `clip`, not `hidden`: `hidden` turns <body> into its
+   * own scroll container (overflow-y becomes auto), which on iOS Safari can
+   * swallow vertical touch-scrolling. `clip` just crops, no scroll container.
+   */
+  overflow-x: clip;
 }
 
 @keyframes fade-in {
