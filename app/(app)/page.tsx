@@ -2,7 +2,8 @@ import { EmptyState, ScreenHeader } from "@/components/ui/screen-header";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { WeekSection } from "@/components/dashboard/week-section";
 import { UpcomingSection } from "@/components/dashboard/upcoming-section";
-import { getEvents } from "@/lib/data";
+import { SubjectChips } from "@/components/dashboard/subject-chips";
+import { getEvents, getSubjects } from "@/lib/data";
 import {
   groupOverdueByType,
   groupThisWeek,
@@ -17,7 +18,10 @@ export default async function DashboardPage() {
   const tz = DEFAULT_TIMEZONE;
   const now = nowInTz(tz);
 
-  const events = await getEvents({ includeCompleted: false });
+  const [events, subjects] = await Promise.all([
+    getEvents({ includeCompleted: false }),
+    getSubjects(),
+  ]);
 
   const week = groupThisWeek(events, tz, now);
   const overdue = groupOverdueByType(events, tz, now);
@@ -38,6 +42,7 @@ export default async function DashboardPage() {
           {overdue.length > 0 && (
             <UpcomingSection groups={overdue} tz={tz} variant="overdue" />
           )}
+          <SubjectChips subjects={subjects} />
           <WeekSection groups={week} tz={tz} />
           <UpcomingSection groups={upcoming} tz={tz} />
         </>
