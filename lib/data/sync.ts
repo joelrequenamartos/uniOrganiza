@@ -41,7 +41,25 @@ export function ensureSynced(supabase: Client, userId: string): Promise<void> {
   return p;
 }
 
-async function sync(supabase: Client, userId: string): Promise<void> {
+/**
+ * Sync right now, ignoring the throttle and the failure back-off. Unlike
+ * `ensureSynced` it surfaces errors so the UI can tell the user.
+ */
+export async function syncNow(supabase: Client, userId: string): Promise<void> {
+  if (!process.env.UNIVERSITY_ICS_URL) {
+    throw new Error("UNIVERSITY_ICS_URL is not configured.");
+  }
+  const running = inFlight.get(userId);
+  if (running) await running; // let an in-progress sync finish first
+  await sync(supabase, userId, true);
+  retryAfter = 0;
+}
+
+async function sync(
+  supabase: Client,
+  userId: string,
+  force = false,
+): Promise<void> {
   const url = process.env.UNIVERSITY_ICS_URL!;
 
   const { data: cal, error: calErr } = await supabase
@@ -51,6 +69,7 @@ async function sync(supabase: Client, userId: string): Promise<void> {
     .maybeSingle();
   if (calErr) throw calErr;
   if (
+    !force &&
     cal?.last_synced_at &&
     Date.now() - new Date(cal.last_synced_at).getTime() < TTL_MS
   ) {

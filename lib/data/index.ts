@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 import type { AcademicEvent, EventType, Subject } from "@/types/domain";
 import { termOf } from "@/lib/domain/subject-term";
-import { ensureSynced } from "./sync";
+import { ensureSynced, syncNow } from "./sync";
 
 type SubjectRow = Database["public"]["Tables"]["subjects"]["Row"];
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
@@ -169,4 +169,21 @@ export async function setEventStatus(
     .eq("id", id)
     .eq("source", "university");
   if (university.error) throw university.error;
+}
+
+/** Pull the university calendar now and report when it last synced. */
+export async function syncUniversityCalendar(): Promise<void> {
+  const { supabase, userId } = await requireUser();
+  await syncNow(supabase, userId);
+}
+
+export async function getLastSyncedAt(): Promise<string | null> {
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase
+    .from("external_calendars")
+    .select("last_synced_at")
+    .eq("provider", "ics")
+    .maybeSingle();
+  if (error) throw error;
+  return data?.last_synced_at ?? null;
 }

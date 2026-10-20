@@ -2,7 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarRange, ChevronRight, ChevronLeft, User } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SyncButton } from "@/components/profile/sync-button";
 import { createClient } from "@/lib/supabase/server";
+import { getLastSyncedAt } from "@/lib/data";
+import { DEFAULT_TIMEZONE, formatDayMonth, formatTime } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi perfil" };
@@ -11,6 +14,11 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/login");
+
+  const synced = await getLastSyncedAt();
+  const lastSynced = synced
+    ? `${formatDayMonth(synced, DEFAULT_TIMEZONE)}, ${formatTime(synced, DEFAULT_TIMEZONE)}`
+    : null;
 
   return (
     <>
@@ -49,6 +57,9 @@ export default async function ProfilePage() {
         </div>
         <ChevronRight size={18} className="shrink-0 text-text-faint" />
       </Link>
+      <div className="mt-3">
+        <SyncButton lastSynced={lastSynced} />
+      </div>
     </>
   );
 }
