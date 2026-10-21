@@ -9,8 +9,8 @@
  */
 import type { AcademicEvent, EventType, PrioritizedEvent } from "@/types/domain";
 import { eventInstant } from "@/types/domain";
-import { daysUntil, localWeekRange, nowInTz, toTz } from "@/lib/dates";
-import { selectUpcoming } from "./priority";
+import { localWeekRange, nowInTz, toTz } from "@/lib/dates";
+import { computePriority, selectUpcoming } from "./priority";
 
 export interface DayGroup {
   /** ISO date key (yyyy-MM-dd, local). */
@@ -38,8 +38,8 @@ export function groupThisWeek(
     const instant = eventInstant(e);
     if (!instant) continue;
     if (e.status === "completed") continue;
-    // Past and not done (exams excepted): lives under "Atrasadas", not here.
-    if (e.type !== "exam" && daysUntil(instant, tz, now) < 0) continue;
+    // Ended and not done (exams excepted): lives under "Atrasadas", not here.
+    if (computePriority(e, tz, now)?.priority === "overdue") continue;
     const local = toTz(instant, tz);
     if (local < start || local > end) continue;
 

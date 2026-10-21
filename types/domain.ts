@@ -66,4 +66,6 @@ export interface PrioritizedEvent {
   priority: PriorityLevel;
   /** Whole days from "today" to the event (local tz). Negative = past. */
   daysUntil: number;
+  /** Overdue only: minutes since it ended (lets "ended an hour ago" show today). */
+  minutesAgo?: number;
 }
