@@ -1,6 +1,7 @@
 /**
  * Turns a flat list of events into the dashboard's two sections:
- *   1. "Esta semana"  — every event in the current Mon–Sun week, grouped by day.
+ *   0. "Atrasadas"    — past and not marked done (shown first, in red).
+ *   1. "Esta semana"  — events of the current Mon–Sun week from today on, grouped by day.
  *   2. "Próximamente" — the alert block, grouped by type in priority order:
  *        Entregas -> Exámenes -> Clases -> Actividades
  *
@@ -8,7 +9,7 @@
  */
 import type { AcademicEvent, EventType, PrioritizedEvent } from "@/types/domain";
 import { eventInstant } from "@/types/domain";
-import { localWeekRange, nowInTz, toTz } from "@/lib/dates";
+import { daysUntil, localWeekRange, nowInTz, toTz } from "@/lib/dates";
 import { selectUpcoming } from "./priority";
 
 export interface DayGroup {
@@ -37,6 +38,8 @@ export function groupThisWeek(
     const instant = eventInstant(e);
     if (!instant) continue;
     if (e.status === "completed") continue;
+    // Past and not done (exams excepted): lives under "Atrasadas", not here.
+    if (e.type !== "exam" && daysUntil(instant, tz, now) < 0) continue;
     const local = toTz(instant, tz);
     if (local < start || local > end) continue;
 
@@ -66,14 +69,7 @@ function prioritizedForDashboard(
   tz: string,
   now: ReturnType<typeof nowInTz>,
 ): PrioritizedEvent[] {
-  const { start: weekStart } = localWeekRange(now);
-  // Past items from the current week are already listed under "Esta semana".
-  return selectUpcoming(events, tz, now).filter((p) => {
-    if (p.priority !== "overdue") return true;
-    if (p.event.type !== "class" && p.event.type !== "activity") return true;
-    const instant = eventInstant(p.event);
-    return !instant || toTz(instant, tz) < weekStart;
-  });
+  return selectUpcoming(events, tz, now);
 }
 
 function byType(items: PrioritizedEvent[]): TypeGroup[] {
